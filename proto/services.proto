@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package services;
+
+option go_package = "proto/;proto";
+
+service ServiceB {
+  rpc DoSomething(Request) returns (Response);
+}
+
+message Request {
+  string message = 1;
+}
+
+message Response {
+  string result = 1;
+}
+
+service ServiceC {
+  rpc DoSomethingElse(Request) returns (Response);
+}

@@ -1,0 +1,60 @@
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.51
+    ports:
+      - "16686:16686"  # UI
+      - "4317:4317"    # OTLP gRPC
+
+  service-a:
+    build:
+      context: .
+      dockerfile: service-a/Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4317
+      - OTEL_SERVICE_NAME=service-a
+    depends_on:
+      - jaeger
+      - service-b
+
+  service-b:
+    build:
+      context: .
+      dockerfile: service-b/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4317
+      - OTEL_SERVICE_NAME=service-b
+    depends_on:
+      - jaeger
+      - service-c
+
+  service-c:
+    build:
+      context: .
+      dockerfile: service-c/Dockerfile
+    ports:
+      - "50052:50052"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4317
+      - OTEL_SERVICE_NAME=service-c
+    depends_on:
+      - jaeger
+      - service-d
+  service-d:
+    build:
+      context: .
+      dockerfile: service-d/Dockerfile
+    ports:
+      - "8089:8089"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4317
+      - OTEL_SERVICE_NAME=service-d
+    depends_on:
+      - jaeger
+
+volumes:
+  go-mod-cache:
+  go-build-cache:
