@@ -45,8 +45,8 @@ services:
       - service-d
   service-d:
     build:
-      context: .
-      dockerfile: service-d/Dockerfile
+      context: ./service-d
+      dockerfile: Dockerfile
     ports:
       - "8089:8089"
     environment:
@@ -54,6 +54,22 @@ services:
       - OTEL_SERVICE_NAME=service-d
     depends_on:
       - jaeger
+    volumes:
+      - ./service-d:/app
+  service-e:
+    build:
+      context: ./service-e
+      dockerfile: Dockerfile
+    container_name: service-e
+    ports:
+      - "8090:8090"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4317
+      - OTEL_SERVICE_NAME=service-e
+    depends_on:
+      - jaeger
+    volumes:
+      - ./service-e:/app
 
 volumes:
   go-mod-cache:

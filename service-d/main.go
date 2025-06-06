@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -54,7 +56,14 @@ func handler(tracer trace.Tracer) http.HandlerFunc {
 			return
 		}
 
-		fmt.Fprint(w, req.Message+" -> D")
+		// call service e
+		body, err := newGraphQLClient(ctx, tracer)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprint(w, req.Message+" -> D -> "+body)
 	}
 }
 
@@ -87,4 +96,45 @@ func initTracer() *sdktrace.TracerProvider {
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	return tp
+}
+
+func newGraphQLClient(ctx context.Context, tracer trace.Tracer) (string, error) {
+	ctx, span := tracer.Start(ctx, "newGraphQLClient")
+	defer span.End()
+	url := "http://service-e:8090/query"
+
+	query := `
+		query {
+			todos {
+				id
+			}
+		}
+	`
+
+	requestBody := map[string]interface{}{
+		"query": query,
+	}
+
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return "", err
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return "", err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(request.Header))
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return "", err
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
 }
