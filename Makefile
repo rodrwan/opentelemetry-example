@@ -13,4 +13,4 @@ up:
 down:
 	docker compose down --volumes
 
-.PHONY: proto build up down
+.PHONY: proto build up down down

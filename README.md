@@ -4,12 +4,13 @@ This repository contains a practical example of implementing distributed tracing
 
 ## Architecture
 
-The project consists of 4 services that communicate with each other:
+The project consists of 5 services that communicate with each other:
 
 - **Service A**: HTTP service that initiates the call chain
 - **Service B**: gRPC service that receives calls from A and calls C
 - **Service C**: gRPC service that receives calls from B and calls D
 - **Service D**: HTTP service that ends the chain
+- **Service E**: GraphQL service with tracing instrumentation
 
 ## Prerequisites
 
@@ -26,15 +27,42 @@ cd opentelemetry-example
 ```
 
 2. Start the services using Docker Compose:
+
+There are several ways to start the services depending on your needs:
+
+### Option 1: All services (recommended)
 ```bash
-docker-compose up --build
+make up 
 ```
 
-## Service Access
+### Available Components:
 
-- Service A: http://localhost:8088
-- Service D: http://localhost:8089
-- Jaeger UI: http://localhost:16686
+- **Application Services**:
+  - Service A (HTTP): http://localhost:8088
+  - Service B (gRPC): localhost:50051
+  - Service C (gRPC): localhost:50052
+  - Service D (HTTP): http://localhost:8089
+  - Service E (GraphQL): http://localhost:8090
+
+- **Observability Tools**:
+  - Jaeger UI: http://localhost:16686
+  - Grafana: http://localhost:3000 (user: admin, password: admin)
+  - Tempo: http://localhost:3200
+
+### Important Environment Variables:
+
+The services use the following environment variables that are automatically configured in docker-compose:
+
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint
+- `OTEL_SERVICE_NAME`: Service name for identification in Jaeger
+
+### Volumes:
+
+The project uses volumes for:
+- Go modules cache
+- Go build cache
+- Grafana configuration
+- Tempo configuration
 
 ## OpenTelemetry Implementation
 
@@ -94,6 +122,20 @@ conn, err := grpc.Dial(
     grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 )
 ```
+
+### 4. GraphQL Service Instrumentation
+
+For GraphQL services, we use a custom tracing middleware:
+
+```go
+srv.Use(graphqlTracer.TracerMiddleware(tracer))
+```
+
+The GraphQL service also includes:
+- GraphQL Playground for testing queries
+- Automatic Persisted Queries (APQ) support
+- Query caching
+- OpenTelemetry instrumentation for both HTTP and GraphQL operations
 
 ## Trace Visualization
 
