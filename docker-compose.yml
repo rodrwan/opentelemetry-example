@@ -11,6 +11,7 @@ services:
     build:
       context: .
       dockerfile: service-a/Dockerfile
+    container_name: service-a
     ports:
       - "8088:8088"
     environment:
@@ -24,6 +25,7 @@ services:
     build:
       context: .
       dockerfile: service-b/Dockerfile
+    container_name: service-b
     ports:
       - "50051:50051"
     environment:
@@ -37,6 +39,7 @@ services:
     build:
       context: .
       dockerfile: service-c/Dockerfile
+    container_name: service-c
     ports:
       - "50052:50052"
     environment:
@@ -49,6 +52,7 @@ services:
     build:
       context: ./service-d
       dockerfile: Dockerfile
+    container_name: service-d
     ports:
       - "8089:8089"
     environment:
